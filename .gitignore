@@ -4,4 +4,4 @@ bin/
 vendor/
 .idea/
 .vscode/
-go.sum
+.DS_Store
