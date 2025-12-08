@@ -9,11 +9,10 @@ import(
 )
 var Client *mongo.Client
 func ConnectDB() *mongo.Client{
+	
 	//Read from .env(MONGO_URI)
 	uri:= os.Getenv("MONGO_URI")
-	if uri==""{
-		log.Fatal("Mising MONGO_URI")
-	}
+	
 	ctx, cancel:=context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
 
@@ -31,10 +30,8 @@ func ConnectDB() *mongo.Client{
 	return client
 }
 func GetCollection(collectionName string) *mongo.Collection {
+
 	//read DB_NAME from .env
-	dbName:=os.Getenv("DB_NAME")
-	if dbName==""{
-		log.Fatal("Missing DB_NAME in .env file")
-	}
+	dbName:=os.Getenv("DB_NAME")	
 	return Client.Database(dbName).Collection(collectionName)
 }

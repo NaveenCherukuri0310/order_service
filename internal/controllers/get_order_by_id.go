@@ -13,8 +13,10 @@ func GetOrderByID(c *gin.Context){
 	//context
 	ctx,cancel:= context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
+
 	//Extract the ID from URL
 	id:= c.Param("id")
+
 	//convert the id string into Mongo ObjectID
 	objID, err:= primitive.ObjectIDFromHex(id)
 	if err!=nil{
@@ -23,6 +25,7 @@ func GetOrderByID(c *gin.Context){
 	}	
 	var order models.Order
 	collection := database.GetCollection("orders")
+	
 	//Query filter
 	filter:= bson.M{"_id": objID}
 	err= collection.FindOne(ctx, filter).Decode(&order)

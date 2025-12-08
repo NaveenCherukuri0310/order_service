@@ -28,13 +28,12 @@ func main()  {
 
 	//Database connection
 	database.ConnectDB()
+	
 	router:=gin.Default()
-	router.GET("/ping", func(c *gin.Context){
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
+
+	routes.PingRoutes(router)
 	routes.OrderRoutes(router)
+
 	//This starts the web server
 	port:= os.Getenv("PORT")
 	router.Run(":"+port)

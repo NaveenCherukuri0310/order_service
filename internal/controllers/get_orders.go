@@ -9,21 +9,29 @@ import(
     "github.com/gin-gonic/gin"
     "go.mongodb.org/mongo-driver/bson"
 )
+
 //c *gin.Context is the request context.
 func GetOrders(c *gin.Context) {
+
 	//MongoDB requests must have a timeout to prevents the request from hanging forever
 	ctx, cancel:= context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
 
+	// Artificial delay: simulate slow database / heavy computation
+    time.Sleep(2 * time.Second)
+
 	//Opens the MongoDB collection "orders".
 	cursor, err := database.GetCollection("orders").Find(ctx, bson.M{})
     if err != nil {
+
 		//gin.H is a shortcut for creating JSON maps:
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
+
 	//Creates an empty list of Order objects.
 	var orders []models.Order
+
 	//Moves through the cursor and stores all documents into orders
     if err := cursor.All(ctx, &orders)
 	err != nil {

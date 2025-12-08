@@ -9,14 +9,18 @@ import(
 	"order_service/internal/models"
 )
 func CreateOrder(c *gin.Context){
+	
+	//MongoDB requests must have a timeout to prevents the request from hanging forever
 	ctx, cancel:=context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
 	var order models.Order
+
 	// Bind JSON body to Order struct
 	if err:= c.BindJSON(&order);err!=nil{
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	// Assign a new MongoDB ObjectID
 	order.ID=primitive.NewObjectID()
 	collection := database.GetCollection("orders")

@@ -10,16 +10,22 @@ import(
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 func UpdateOrder(c *gin.Context){
+	
+	//MongoDB requests must have a timeout to prevents the request from hanging forever
 	ctx, cancel:= context.WithTimeout(context.Background(),10*time.Second)
 	defer cancel()
 
+	//Extract the ID from URL
 	id:=c.Param("id")
+
+	//convert the id string into Mongo ObjectID
 	objID,err:= primitive.ObjectIDFromHex(id)
 	if err!=nil{
 		c.JSON(http.StatusBadRequest, gin.H{"error":"Invalid ID"})
 		return
 	}
 	var updatedData models.Order
+	
 	//Bind JSON body
 	if err := c.BindJSON(&updatedData); err != nil {
     	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -34,15 +40,12 @@ func UpdateOrder(c *gin.Context){
         	"status":   updatedData.Status,
 		},
 	}
-	result,err :=collection.UpdateByID(ctx,objID,update)
+	_,err =collection.UpdateByID(ctx,objID,update)
 	if err!=nil{
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update"})
 		return
 	}
-	if result.MatchedCount==0{
-		c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
-        return
-	}
+	
 	updatedData.ID=objID
 	c.JSON(http.StatusOK, updatedData)
 
