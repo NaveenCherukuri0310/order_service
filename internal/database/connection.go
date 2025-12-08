@@ -32,7 +32,7 @@ func ConnectDB() *mongo.Client{
 }
 func GetCollection(collectionName string) *mongo.Collection {
 	//read DB_NAME from .env
-	dbName:=os.Getenv("DB_Name")
+	dbName:=os.Getenv("DB_NAME")
 	if dbName==""{
 		log.Fatal("Missing DB_NAME in .env file")
 	}

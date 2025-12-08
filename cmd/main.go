@@ -15,6 +15,7 @@ func main()  {
 	if err:=godotenv.Load();err!=nil{
 		log.Fatal("Error loading .env file")
 	}
+	log.Println("Loaded DB_NAME:", os.Getenv("DB_NAME"))
 
 	//Check required env variables
 	required:=[]string{"MONGO_URI","DB_NAME","PORT"}

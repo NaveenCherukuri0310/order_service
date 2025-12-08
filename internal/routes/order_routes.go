@@ -13,6 +13,6 @@ orders := router.Group("/orders")
 orders.GET("/", controllers.GetOrders)
 orders.POST("/",controllers.CreateOrder)
 orders.GET("/:id",controllers.GetOrderByID)
-
+orders.PUT("/:id",controllers.UpdateOrder)
 
 }
