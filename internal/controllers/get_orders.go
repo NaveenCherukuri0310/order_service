@@ -1,19 +1,14 @@
 //Function that handle API requests
 package controllers
-//importing required packages
 import(
-	//import controls request timeout
 	"context"
-	//import http status codes
 	"net/http"
 	"order_service/internal/database"
     "order_service/internal/models"
-	//to set timeout duration
     "time"
     "github.com/gin-gonic/gin"
     "go.mongodb.org/mongo-driver/bson"
 )
-//handler func for GET/orders
 //c *gin.Context is the request context.
 func GetOrders(c *gin.Context) {
 	//MongoDB requests must have a timeout to prevents the request from hanging forever
