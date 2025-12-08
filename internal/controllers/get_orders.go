@@ -33,28 +33,3 @@ func GetOrders(c *gin.Context) {
 
     c.JSON(http.StatusOK, orders)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
