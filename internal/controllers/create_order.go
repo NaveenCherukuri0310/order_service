@@ -1,6 +1,7 @@
 package controllers
 import(
 	"context"
+	"log"
 	"time"
 	"net/http"
 	"github.com/gin-gonic/gin"
@@ -17,6 +18,7 @@ func CreateOrder(c *gin.Context){
 
 	// Bind JSON body to Order struct
 	if err:= c.BindJSON(&order);err!=nil{
+		log.Println("CreateOrder: Invalid JSON body:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -25,12 +27,15 @@ func CreateOrder(c *gin.Context){
 	order.ID=primitive.NewObjectID()
 	collection := database.GetCollection("orders")
 
-	_, err := collection.InsertOne(ctx, order)
+	result, err := collection.InsertOne(ctx, order)
 	if err != nil {
+		log.Println("CreateOrder: MongoDB InsertOne failed:", err)
     	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert order"})
     	return
 	}
 
+	//success log
+	log.Printf("CreateOrder: Order created with ID %v", result.InsertedID)
 	c.JSON(http.StatusCreated, order)
 
 }

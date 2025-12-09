@@ -7,6 +7,7 @@ import(
 	"github.com/gin-gonic/gin"
 	"order_service/internal/database"
 	"order_service/internal/routes"
+	"order_service/internal/middleware"
 	"github.com/joho/godotenv"
 )
 
@@ -29,13 +30,19 @@ func main()  {
 	//Database connection
 	database.ConnectDB()
 	
-	router:=gin.Default()
+	// Gin engine
+	router := gin.New()      
+	router.Use(gin.Recovery())
+	
+	//Custom Logger
+	router.Use(middleware.Logger())
 
 	routes.PingRoutes(router)
 	routes.OrderRoutes(router)
 
 	//This starts the web server
 	port:= os.Getenv("PORT")
+	log.Println("Server running on port:", port)
 	router.Run(":"+port)
 	
 }
