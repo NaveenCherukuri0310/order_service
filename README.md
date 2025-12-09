@@ -1,7 +1,7 @@
-## Order Service API
+# Order Service API
 
 A production ready Order Management API built using Go, Gin, and MongoDB.
-This service demonstrates clean architecture, environment variable usage, and full CRUD operations.
+This service demonstrates clean architecture, environment variable usage, custom logging, and full CRUD operations.
 
 ## Features
 
@@ -10,10 +10,13 @@ This service demonstrates clean architecture, environment variable usage, and fu
 * Get order by ID
 * Update an order
 * Delete an order
-* Uses .env configuration
+* Custom request logger middleware
+* Logging implemented in CreateOrder handler
+* Central logger available for all files (optional to use)
 * MongoDB connection with timeout
 * Clean folder structure
-* Ping route separated into its own controller
+* Environment variable validation
+* Dedicated ping route for health check
 
 ## Project Structure
 
@@ -25,22 +28,27 @@ order_service
 │
 ├── internal
 │   ├── controllers
-│   │     ├──ping_controller.go
-│   │     ├──create_order.go
-│   │     ├──get_orders.go
-│   │     ├──get_order_by_id.go
-│   │     └──update_order.go
-│   │     
+│   │     ├── ping_controller.go
+│   │     ├── create_order.go  ← logging added here
+│   │     ├── get_orders.go
+│   │     ├── get_order_by_id.go
+│   │     └── update_order.go
 │   │
 │   ├── routes
-│   │     ├──ping_routes.go
+│   │     ├── ping_routes.go
 │   │     └── order_routes.go
 │   │
 │   ├── database
-│   │     └── onnection.go
+│   │     └── connection.go
 │   │
 │   ├── models
-│         └── order.go
+│   │     └── order.go
+│
+├── middleware
+│   └── logger.go   ← custom request logger
+│
+├── logger
+│   └── logger.go   ← global logger (usable anywhere)
 │
 ├── sample.env
 ├── .gitignore
@@ -49,58 +57,87 @@ order_service
 └── README.md
 ```
 
+## Request Logging
+
+### Request Logger Middleware
+
+Every HTTP request is logged automatically through:
+
+```
+middleware/logger.go
+```
+
+Logs include
+* Method
+* Path
+* Status
+* Duration
+
+This runs for *every route* without needing to modify controllers.
+
+### Application Logging
+
+A central logger is available at:
+
+```
+logger/logger.go
+```
+
+You can log from any file using:
+
+```go
+logger.Log.Println("message here")
+```
+
+### Current Implementation
+
+At this moment, internal logging is added only inside:
+
+```
+create_order.go
+```
+
+Other controllers do not use logging yet, but support is ready.
+
 ## Requirements
 
 * Go installed
-* MongoDB running locally or using MongoDB Atlas
-* Postman or Thunder Client for API testing
+* MongoDB (local or Atlas)
+* Postman or Thunder Client
 
 ## Setup Instructions
 
-### Clone the repository
+### 1. Clone
 
 ```
-git clone <your repository url>
+git clone <repo-url>
 cd order_service
 ```
 
-### Create your environment file
+### 2. Create `.env`
 
 ```
 cp sample.env .env
 ```
 
-Now open the new .env file and set values
+Edit:
 
 ```
 MONGO_URI=mongodb://localhost:27017
 DB_NAME=orderdb
 PORT=8080
 ```
-#### Important Notes
 
-* Do not commit .env to version control
-* Do not share real database credentials in README or anywhere in the repository
-* Always use sample.env to communicate required variable names
-* The application validates environment variables at startup to prevent misconfiguration
-
-### Install dependencies
+### 3. Install dependencies
 
 ```
 go mod tidy
 ```
 
-### Run the server
+### 4. Run
 
 ```
 go run cmd/main.go
-```
-
-Expected output
-
-```
-Connected to MongoDB
-Listening and serving HTTP on :8080
 ```
 
 ## API Endpoints
@@ -111,21 +148,13 @@ Listening and serving HTTP on :8080
 GET /ping
 ```
 
-Response
-
-```
-{
-  "message": "pong"
-}
-```
-
 ### Create Order
 
 ```
 POST /orders
 ```
 
-Body example
+Body:
 
 ```
 {
@@ -154,35 +183,12 @@ GET /orders/:id
 PUT /orders/:id
 ```
 
-Body example
-
-```
-{
-  "item": "Laptop Pro",
-  "quantity": 3,
-  "price": 1599.50,
-  "status": "updated"
-}
-```
-
-
 ## Environment Variables
-
-Use `.env` in the project root.
-Never commit `.env` to Git.
-Use `sample.env` as a template.
-
-Content of sample.env
 
 ```
 MONGO_URI=
 DB_NAME=
 PORT=
 ```
-
-
-## License
-
-This project is for learning and development use.
 
 
