@@ -1,41 +1,55 @@
 package controllers
-import(
+
+import (
 	"context"
-	"log"
-	"time"
 	"net/http"
-	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"time"
+
 	"order_service/internal/database"
+	"order_service/internal/logger"
 	"order_service/internal/models"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
-func CreateOrder(c *gin.Context){
-	
-	//MongoDB requests must have a timeout to prevents the request from hanging forever
-	ctx, cancel:=context.WithTimeout(context.Background(),10*time.Second)
+
+func CreateOrder(c *gin.Context) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
 	var order models.Order
 
-	// Bind JSON body to Order struct
-	if err:= c.BindJSON(&order);err!=nil{
-		log.Println("CreateOrder: Invalid JSON body:", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// Parse JSON
+	if err := c.BindJSON(&order); err != nil {
+		logger.Log.Println("CreateOrder: Invalid JSON:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
-	// Assign a new MongoDB ObjectID
-	order.ID=primitive.NewObjectID()
-	collection := database.GetCollection("orders")
+	// Core fields
+	order.MongoID = primitive.NewObjectID()
+	order.OrderID = uuid.New().String()
+	order.CreatedAt = time.Now()
+	order.UpdatedAt = time.Now()
+	order.Disabled = false
 
-	result, err := collection.InsertOne(ctx, order)
-	if err != nil {
-		log.Println("CreateOrder: MongoDB InsertOne failed:", err)
-    	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert order"})
-    	return
+	// Auto-calc total price per item
+	for i := range order.Items {
+		order.Items[i].TotalPrice = order.Items[i].UnitPrice * float64(order.Items[i].Quantity)
 	}
 
-	//success log
-	log.Printf("CreateOrder: Order created with ID %v", result.InsertedID)
-	c.JSON(http.StatusCreated, order)
+	collection := database.GetCollection("orders")
 
+	_, err := collection.InsertOne(ctx, order)
+	if err != nil {
+		logger.Log.Println("CreateOrder: Insert failed:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order"})
+		return
+	}
+
+	logger.Log.Printf("CreateOrder: Success. OrderID=%s", order.OrderID)
+
+	c.JSON(http.StatusCreated, order)
 }

@@ -45,10 +45,8 @@ order_service
 │   │     └── order.go
 │
 ├── middleware
-│   └── logger.go   ← custom request logger
+│   └── logger.go   
 │
-├── logger
-│   └── logger.go   ← global logger (usable anywhere)
 │
 ├── sample.env
 ├── .gitignore
@@ -76,12 +74,6 @@ Logs include
 This runs for *every route* without needing to modify controllers.
 
 ### Application Logging
-
-A central logger is available at:
-
-```
-logger/logger.go
-```
 
 You can log from any file using:
 

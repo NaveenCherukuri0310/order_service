@@ -1,8 +1,12 @@
 package routes
-import(
+
+import (
 	"order_service/internal/controllers"
+
 	"github.com/gin-gonic/gin"
 )
-func PingRoutes(router *gin.Engine){
-	router.GET("/ping", controllers.Ping)
+
+func PingRoutes(r *gin.Engine) {
+	r.GET("/ping", controllers.Ping)
+	r.GET("/test-token", controllers.GetTestToken)
 }

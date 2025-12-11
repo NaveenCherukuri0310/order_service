@@ -1,43 +1,47 @@
-//Function that handle API requests
 package controllers
-import(
+
+import (
 	"context"
 	"net/http"
+	"time"
+
 	"order_service/internal/database"
-    "order_service/internal/models"
-    "time"
-    "github.com/gin-gonic/gin"
-    "go.mongodb.org/mongo-driver/bson"
+	"order_service/internal/logger"
+	"order_service/internal/models"
+
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
-//c *gin.Context is the request context.
 func GetOrders(c *gin.Context) {
 
-	//MongoDB requests must have a timeout to prevents the request from hanging forever
-	ctx, cancel:= context.WithTimeout(context.Background(),10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Artificial delay: simulate slow database / heavy computation
-    time.Sleep(2 * time.Second)
-
-	//Opens the MongoDB collection "orders".
-	cursor, err := database.GetCollection("orders").Find(ctx, bson.M{})
-    if err != nil {
-
-		//gin.H is a shortcut for creating JSON maps:
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
-
-	//Creates an empty list of Order objects.
 	var orders []models.Order
 
-	//Moves through the cursor and stores all documents into orders
-    if err := cursor.All(ctx, &orders)
-	err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	collection := database.GetCollection("orders")
+
+	filter := bson.M{"disabled": false}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		logger.Log.Println("GetOrders: DB Find error:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch orders"})
 		return
 	}
+	defer cursor.Close(ctx)
 
-    c.JSON(http.StatusOK, orders)
+	for cursor.Next(ctx) {
+		var o models.Order
+		if err := cursor.Decode(&o); err != nil {
+			logger.Log.Println("GetOrders: Decode error:", err)
+			continue
+		}
+		orders = append(orders, o)
+	}
+
+	logger.Log.Printf("GetOrders: Success. Count=%d", len(orders))
+
+	c.JSON(http.StatusOK, orders)
 }

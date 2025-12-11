@@ -1,18 +1,19 @@
 package routes
 
 import (
-"github.com/gin-gonic/gin"
-"order_service/internal/controllers"
+	"order_service/internal/controllers"
+	"order_service/internal/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
-func OrderRoutes(router *gin.Engine) {
+func OrderRoutes(r *gin.Engine) {
 
-// All order routes go inside this group
-orders := router.Group("/orders")
+	order := r.Group("/orders")
+	order.Use(middleware.AuthRequired())
 
-orders.GET("/", controllers.GetOrders)
-orders.POST("/",controllers.CreateOrder)
-orders.GET("/:id",controllers.GetOrderByID)
-orders.PUT("/:id",controllers.UpdateOrder)
-
+	order.POST("", controllers.CreateOrder)
+	order.GET("", controllers.GetOrders)
+	order.GET("/:id", controllers.GetOrderByID)
+	order.PUT("/:id", controllers.UpdateOrder)
 }

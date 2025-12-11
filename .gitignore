@@ -5,3 +5,5 @@ vendor/
 .idea/
 .vscode/
 .DS_Store
+log.txt
+app.log

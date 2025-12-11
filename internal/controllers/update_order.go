@@ -1,52 +1,66 @@
 package controllers
-import(
-	"net/http"
+
+import (
 	"context"
+	"net/http"
 	"time"
+
 	"order_service/internal/database"
+	"order_service/internal/logger"
 	"order_service/internal/models"
+
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
-func UpdateOrder(c *gin.Context){
-	
-	//MongoDB requests must have a timeout to prevents the request from hanging forever
-	ctx, cancel:= context.WithTimeout(context.Background(),10*time.Second)
+
+func UpdateOrder(c *gin.Context) {
+
+	orderID := c.Param("id")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	//Extract the ID from URL
-	id:=c.Param("id")
+	var updated models.Order
 
-	//convert the id string into Mongo ObjectID
-	objID,err:= primitive.ObjectIDFromHex(id)
-	if err!=nil{
-		c.JSON(http.StatusBadRequest, gin.H{"error":"Invalid ID"})
+	if err := c.BindJSON(&updated); err != nil {
+		logger.Log.Println("UpdateOrder: Invalid JSON:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid body"})
 		return
 	}
-	var updatedData models.Order
-	
-	//Bind JSON body
-	if err := c.BindJSON(&updatedData); err != nil {
-    	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-    	return
+
+	// Recalculate total prices
+	for i := range updated.Items {
+		updated.Items[i].TotalPrice = updated.Items[i].UnitPrice * float64(updated.Items[i].Quantity)
 	}
-	collection:=database.GetCollection("orders")
-	update:=bson.M{
+
+	update := bson.M{
 		"$set": bson.M{
-			"item":     updatedData.Item,
-        	"quantity": updatedData.Quantity,
-        	"price":    updatedData.Price,
-        	"status":   updatedData.Status,
+			"items":      updated.Items,
+			"status":     updated.Status,
+			"updated_at": time.Now(),
 		},
 	}
-	_,err =collection.UpdateByID(ctx,objID,update)
-	if err!=nil{
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update"})
+
+	collection := database.GetCollection("orders")
+
+	result, err := collection.UpdateOne(ctx, bson.M{
+		"order_id": orderID,
+		"disabled": false,
+	}, update)
+
+	if err != nil {
+		logger.Log.Println("UpdateOrder: DB Update error:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update order"})
 		return
 	}
-	
-	updatedData.ID=objID
-	c.JSON(http.StatusOK, updatedData)
 
+	if result.MatchedCount == 0 {
+		logger.Log.Printf("UpdateOrder: OrderID %s not found", orderID)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
+		return
+	}
+
+	logger.Log.Printf("UpdateOrder: Success. OrderID=%s", orderID)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Order updated successfully"})
 }

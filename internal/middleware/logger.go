@@ -1,24 +1,29 @@
 package middleware
-import(
-	"log"
+
+import (
+	"fmt"
+	"order_service/internal/logger"
 	"time"
+
 	"github.com/gin-gonic/gin"
 )
-func Logger() gin.HandlerFunc{
-	return func(c *gin.Context){
 
-		//records the current time the request enters middleware.
+func Logger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
 		start := time.Now()
-
-		//Continue to next handler
 		c.Next()
-		duration:= time.Since(start)
+		duration := time.Since(start)
 
-		log.Printf("%s %s | Status: %d | Time: %v",
+		message := fmt.Sprintf(
+			"%s %s | Status=%d | Time=%v",
 			c.Request.Method,
 			c.Request.URL.Path,
 			c.Writer.Status(),
 			duration,
 		)
+
+		// write to file
+		logger.Log.Println(message)
 	}
 }

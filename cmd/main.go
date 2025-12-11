@@ -1,39 +1,42 @@
-//Go executable must have package main.
+// Go executable must have package main.
 package main
 
-import(
+import (
 	"log"
-	"os"
-	"github.com/gin-gonic/gin"
 	"order_service/internal/database"
-	"order_service/internal/routes"
+	"order_service/internal/logger"
 	"order_service/internal/middleware"
+	"order_service/internal/routes"
+	"os"
+
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
-func main()  {
+func main() {
+	logger.Init()
 	//Load .env file
-	if err:=godotenv.Load();err!=nil{
+	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}
 	log.Println("Loaded DB_NAME:", os.Getenv("DB_NAME"))
 
 	//Check required env variables
-	required:=[]string{"MONGO_URI","DB_NAME","PORT"}
+	required := []string{"MONGO_URI", "DB_NAME", "PORT"}
 
-	for _,key:=range required{
-		if os.Getenv(key)==""{
-			log.Fatalf("Environment variable %s is missing in .env",key)
+	for _, key := range required {
+		if os.Getenv(key) == "" {
+			log.Fatalf("Environment variable %s is missing in .env", key)
 		}
 	}
 
 	//Database connection
 	database.ConnectDB()
-	
+
 	// Gin engine
-	router := gin.New()      
+	router := gin.New()
 	router.Use(gin.Recovery())
-	
+
 	//Custom Logger
 	router.Use(middleware.Logger())
 
@@ -41,8 +44,8 @@ func main()  {
 	routes.OrderRoutes(router)
 
 	//This starts the web server
-	port:= os.Getenv("PORT")
+	port := os.Getenv("PORT")
 	log.Println("Server running on port:", port)
-	router.Run(":"+port)
-	
+	router.Run(":" + port)
+
 }
