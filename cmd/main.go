@@ -9,6 +9,9 @@ import (
 	"order_service/internal/routes"
 	"os"
 
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -39,6 +42,15 @@ func main() {
 
 	//Custom Logger
 	router.Use(middleware.Logger())
+
+	// Serve OpenAPI spec
+	router.StaticFile("/docs/orders.yaml", "./docs/orders.yaml")
+
+	// Swagger UI
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(
+		swaggerFiles.Handler,
+		ginSwagger.URL("/docs/orders.yaml"),
+	))
 
 	routes.PingRoutes(router)
 	routes.OrderRoutes(router)
